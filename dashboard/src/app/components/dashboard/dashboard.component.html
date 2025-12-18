@@ -1,0 +1,286 @@
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+  <!-- Header -->
+  <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="/assets/logo.png" alt="Logo" class="h-9 w-auto" />
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Task Management</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <button (click)="themeService.toggleTheme()"
+            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            aria-label="Toggle theme">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path *ngIf="!themeService.darkMode()" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              <path *ngIf="themeService.darkMode()" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </button>
+          <button (click)="logout()"
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Controls -->
+    <div class="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div class="flex flex-wrap gap-4 items-center">
+        <button (click)="openCreateModal()"
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
+          + Create Task
+        </button>
+
+        <div class="flex gap-2">
+          <select [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)"
+            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm">
+            <option value="all">All Categories</option>
+            <option [value]="TaskCategory.WORK">Work</option>
+            <option [value]="TaskCategory.PERSONAL">Personal</option>
+          </select>
+
+          <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)"
+            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm">
+            <option value="all">All Statuses</option>
+            <option [value]="TaskStatus.TODO">Todo</option>
+            <option [value]="TaskStatus.IN_PROGRESS">In Progress</option>
+            <option [value]="TaskStatus.DONE">Done</option>
+          </select>
+        </div>
+      </div>
+
+      <button (click)="toggleViewMode()"
+        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm">
+        {{ viewMode() === 'list' ? 'Board View' : 'List View' }}
+      </button>
+    </div>
+
+    <!-- Board View -->
+    <div *ngIf="viewMode() === 'board'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Todo Column -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Todo ({{ tasksByStatus().todo.length }})
+        </h2>
+        <div cdkDropList id="todo-list" [cdkDropListData]="tasksByStatus().todo" (cdkDropListDropped)="onDrop($event)"
+          [cdkDropListConnectedTo]="['in-progress-list', 'done-list']" class="min-h-[200px] space-y-3">
+          <div *ngFor="let task of tasksByStatus().todo" cdkDrag
+            class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-move hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ task.title }}</h3>
+              <button (click)="deleteTask(task)"
+                class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                ×
+              </button>
+            </div>
+            <p *ngIf="task.description" class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {{ task.description }}
+            </p>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 text-xs rounded-full" [class.bg-blue-100]="task.category === TaskCategory.WORK"
+                [class.text-blue-800]="task.category === TaskCategory.WORK"
+                [class.dark:bg-blue-900]="task.category === TaskCategory.WORK"
+                [class.dark:text-blue-200]="task.category === TaskCategory.WORK"
+                [class.bg-purple-100]="task.category === TaskCategory.PERSONAL"
+                [class.text-purple-800]="task.category === TaskCategory.PERSONAL"
+                [class.dark:bg-purple-900]="task.category === TaskCategory.PERSONAL"
+                [class.dark:text-purple-200]="task.category === TaskCategory.PERSONAL">
+                {{ task.category }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- In Progress Column -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          In Progress ({{ tasksByStatus().in_progress.length }})
+        </h2>
+        <div cdkDropList id="in-progress-list" [cdkDropListData]="tasksByStatus().in_progress"
+          (cdkDropListDropped)="onDrop($event)" [cdkDropListConnectedTo]="['todo-list', 'done-list']"
+          class="min-h-[200px] space-y-3">
+          <div *ngFor="let task of tasksByStatus().in_progress" cdkDrag
+            class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-move hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ task.title }}</h3>
+              <button (click)="deleteTask(task)"
+                class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                ×
+              </button>
+            </div>
+            <p *ngIf="task.description" class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {{ task.description }}
+            </p>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 text-xs rounded-full" [class.bg-blue-100]="task.category === TaskCategory.WORK"
+                [class.text-blue-800]="task.category === TaskCategory.WORK"
+                [class.dark:bg-blue-900]="task.category === TaskCategory.WORK"
+                [class.dark:text-blue-200]="task.category === TaskCategory.WORK"
+                [class.bg-purple-100]="task.category === TaskCategory.PERSONAL"
+                [class.text-purple-800]="task.category === TaskCategory.PERSONAL"
+                [class.dark:bg-purple-900]="task.category === TaskCategory.PERSONAL"
+                [class.dark:text-purple-200]="task.category === TaskCategory.PERSONAL">
+                {{ task.category }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Done Column -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Done ({{ tasksByStatus().done.length }})
+        </h2>
+        <div cdkDropList id="done-list" [cdkDropListData]="tasksByStatus().done" (cdkDropListDropped)="onDrop($event)"
+          [cdkDropListConnectedTo]="['todo-list', 'in-progress-list']" class="min-h-[200px] space-y-3">
+          <div *ngFor="let task of tasksByStatus().done" cdkDrag
+            class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-move hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-medium text-gray-900 dark:text-white line-through">{{ task.title }}</h3>
+              <button (click)="deleteTask(task)"
+                class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                ×
+              </button>
+            </div>
+            <p *ngIf="task.description" class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {{ task.description }}
+            </p>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 text-xs rounded-full" [class.bg-blue-100]="task.category === TaskCategory.WORK"
+                [class.text-blue-800]="task.category === TaskCategory.WORK"
+                [class.dark:bg-blue-900]="task.category === TaskCategory.WORK"
+                [class.dark:text-blue-200]="task.category === TaskCategory.WORK"
+                [class.bg-purple-100]="task.category === TaskCategory.PERSONAL"
+                [class.text-purple-800]="task.category === TaskCategory.PERSONAL"
+                [class.dark:bg-purple-900]="task.category === TaskCategory.PERSONAL"
+                [class.dark:text-purple-200]="task.category === TaskCategory.PERSONAL">
+                {{ task.category }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- List View -->
+    <div *ngIf="viewMode() === 'list'" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div class="divide-y divide-gray-200 dark:divide-gray-700">
+        <div *ngFor="let task of filteredTasks()" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="font-medium text-gray-900 dark:text-white"
+                [class.line-through]="task.status === TaskStatus.DONE">
+                {{ task.title }}
+              </h3>
+              <p *ngIf="task.description" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {{ task.description }}
+              </p>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="px-2 py-1 text-xs rounded-full" [class.bg-blue-100]="task.category === TaskCategory.WORK"
+                  [class.text-blue-800]="task.category === TaskCategory.WORK"
+                  [class.dark:bg-blue-900]="task.category === TaskCategory.WORK"
+                  [class.dark:text-blue-200]="task.category === TaskCategory.WORK"
+                  [class.bg-purple-100]="task.category === TaskCategory.PERSONAL"
+                  [class.text-purple-800]="task.category === TaskCategory.PERSONAL"
+                  [class.dark:bg-purple-900]="task.category === TaskCategory.PERSONAL"
+                  [class.dark:text-purple-200]="task.category === TaskCategory.PERSONAL">
+                  {{ task.category }}
+                </span>
+                <span
+                  class="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  {{ task.status }}
+                </span>
+              </div>
+            </div>
+            <button (click)="deleteTask(task)"
+              class="ml-4 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+              Delete
+            </button>
+          </div>
+        </div>
+        <div *ngIf="filteredTasks().length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
+          No tasks found
+        </div>
+      </div>
+    </div>
+
+    <!-- Centered Crest Image -->
+    <div class="flex justify-center items-center py-12">
+      <img src="/assets/crest.svg" alt="Crest" class="h-40 w-auto dark:opacity-90 max-w-full" />
+    </div>
+  </main>
+
+  <!-- Create Task Modal -->
+  <div *ngIf="showCreateModal()" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+    (click)="closeCreateModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" (click)="$event.stopPropagation()">
+      <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Create New Task</h2>
+
+      <form (ngSubmit)="createTask()">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Title *
+          </label>
+          <input type="text" [(ngModel)]="newTask.title" name="title" required
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            placeholder="Enter task title" />
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Description
+          </label>
+          <textarea [(ngModel)]="newTask.description" name="description" rows="3"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            placeholder="Enter task description"></textarea>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Category
+          </label>
+          <select [(ngModel)]="newTask.category" name="category"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+            <option [value]="TaskCategory.WORK">Work</option>
+            <option [value]="TaskCategory.PERSONAL">Personal</option>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Status
+          </label>
+          <select [(ngModel)]="newTask.status" name="status"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+            <option [value]="TaskStatus.TODO">Todo</option>
+            <option [value]="TaskStatus.IN_PROGRESS">In Progress</option>
+            <option [value]="TaskStatus.DONE">Done</option>
+          </select>
+        </div>
+
+        <div class="mb-4 text-red-600 dark:text-red-400 text-sm" *ngIf="error">
+          {{ error }}
+        </div>
+
+        <div class="flex gap-3">
+          <button type="button" (click)="closeCreateModal()"
+            class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            Cancel
+          </button>
+          <button type="submit" [disabled]="creating || !newTask.title.trim()"
+            class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-lg transition-colors">
+            {{ creating ? 'Creating...' : 'Create' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

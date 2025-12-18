@@ -1,0 +1,9 @@
+@token = YOUR_JWT_HERE
+
+### Get Tasks as a Viewer
+GET http://localhost:3000/api/tasks
+Authorization: Bearer {{token}}
+
+### Try to Delete Task (Should Fail for Viewer)
+DELETE http://localhost:3000/api/tasks/1
+Authorization: Bearer {{token}}
