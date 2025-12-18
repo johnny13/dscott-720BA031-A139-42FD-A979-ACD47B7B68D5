@@ -1,3 +1,5 @@
+![Task Management Dashboard](./preview.png)
+
 # Task Management System
 
 A full-stack Task Management System built with NX Monorepo, featuring a NestJS backend and Angular frontend.
@@ -10,6 +12,8 @@ This is an NX monorepo containing:
 - **`dashboard`** - Angular frontend application
 
 ## Tech Stack
+
+![Task Management Dashboard](./api-preview.png)
 
 ### Backend
 - **NestJS** - Progressive Node.js framework
